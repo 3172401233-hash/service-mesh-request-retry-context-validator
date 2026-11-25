@@ -1,0 +1,63 @@
+{
+  "description": "Gateway and two services share one entry-generated key. The payment attempt timed out after charging the card without idempotent dedup, so no position may blindly replay.",
+  "idempotency_key": "idem-example-chain-0002",
+  "retry_count": 2,
+  "body_digest": "sha256:104392689659ca878e82a156a6fcb703d40478c1276315c298965acc5c96b2be",
+  "original_request": {
+    "method": "POST",
+    "path": "/checkout",
+    "body_text": "{\"order_id\":\"EX-2\",\"items\":[1,2]}"
+  },
+  "call_chain": [
+    {
+      "name": "client->gateway",
+      "caller": "client",
+      "callee": "gateway",
+      "attempts": [
+        {
+          "attempt_id": "gw-1",
+          "response_status": 503,
+          "retry_count": 0,
+          "idempotency_key": "idem-example-chain-0002",
+          "body_digest": "sha256:104392689659ca878e82a156a6fcb703d40478c1276315c298965acc5c96b2be"
+        }
+      ]
+    },
+    {
+      "name": "gateway->order-service",
+      "caller": "gateway",
+      "callee": "order-service",
+      "attempts": [
+        {
+          "attempt_id": "ord-1",
+          "response_status": 504,
+          "retry_count": 0,
+          "idempotency_key": "idem-example-chain-0002",
+          "body_digest": "sha256:104392689659ca878e82a156a6fcb703d40478c1276315c298965acc5c96b2be"
+        }
+      ]
+    },
+    {
+      "name": "order-service->payment-service",
+      "caller": "order-service",
+      "callee": "payment-service",
+      "attempts": [
+        {
+          "attempt_id": "pay-1",
+          "response_status": null,
+          "error": "read timeout",
+          "retry_count": 0,
+          "idempotency_key": "idem-example-chain-0002",
+          "body_digest": "sha256:104392689659ca878e82a156a6fcb703d40478c1276315c298965acc5c96b2be",
+          "side_effects": [
+            {
+              "name": "charge-card",
+              "committed": true,
+              "idempotency_protected": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

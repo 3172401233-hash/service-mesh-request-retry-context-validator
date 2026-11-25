@@ -1,0 +1,52 @@
+{
+  "description": "Client cancellation arrives late: the payment branch already charged the card, while inventory and recommendation branches are still running and must be cancelled.",
+  "idempotency_key": "idem-example-cancel-0003",
+  "body_digest": "sha256:f5d4e50050f81bf56561b67aea6b02bf060117b0731d883845ad223358a711a4",
+  "original_request": {
+    "method": "POST",
+    "path": "/reserve",
+    "body_text": "{\"order_id\":\"EX-3\",\"op\":\"reserve\"}"
+  },
+  "cancellation": {
+    "requested": true,
+    "arrival": "late",
+    "reason": "client gone"
+  },
+  "call_chain": [
+    {
+      "name": "gateway->reservation-service",
+      "caller": "gateway",
+      "callee": "reservation-service",
+      "attempts": [
+        {
+          "attempt_id": "rsv-1",
+          "response_status": 503,
+          "retry_count": 0,
+          "idempotency_key": "idem-example-cancel-0003",
+          "body_digest": "sha256:f5d4e50050f81bf56561b67aea6b02bf060117b0731d883845ad223358a711a4"
+        }
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "branch_id": "payments",
+      "state": "completed",
+      "side_effects": [
+        {
+          "name": "charge-card",
+          "committed": true,
+          "idempotency_protected": false
+        }
+      ]
+    },
+    {
+      "branch_id": "inventory",
+      "state": "running"
+    },
+    {
+      "branch_id": "recommendation",
+      "state": "running"
+    }
+  ]
+}

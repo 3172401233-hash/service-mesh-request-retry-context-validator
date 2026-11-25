@@ -1,0 +1,45 @@
+{
+  "description": "First hop decompresses a gzip body. The wire digest changes, but the canonical decoded-body digest stays stable and is what idempotency binds to.",
+  "idempotency_key": "idem-example-digest-0001",
+  "retry_count": 2,
+  "body_digest": "sha256:6cd26290f156ef12dc317bd83368040961233ec718f2dfe2fb40a0fc27a451e7",
+  "body_digest_basis": "canonical",
+  "original_request": {
+    "method": "POST",
+    "path": "/orders",
+    "body_text": "{\"order_id\":\"EX-1\",\"amount\":9900,\"currency\":\"CNY\"}",
+    "compress": "gzip"
+  },
+  "call_chain": [
+    {
+      "name": "client->gateway",
+      "caller": "client",
+      "callee": "gateway",
+      "attempts": [
+        {
+          "attempt_id": "gw-1",
+          "response_status": 503,
+          "retry_count": 0,
+          "idempotency_key": "idem-example-digest-0001",
+          "body_digest": "sha256:6cd26290f156ef12dc317bd83368040961233ec718f2dfe2fb40a0fc27a451e7",
+          "digest_basis": "canonical"
+        }
+      ]
+    },
+    {
+      "name": "gateway->order-service",
+      "caller": "gateway",
+      "callee": "order-service",
+      "attempts": [
+        {
+          "attempt_id": "ord-1",
+          "response_status": 502,
+          "retry_count": 0,
+          "idempotency_key": "idem-example-digest-0001",
+          "body_digest": "sha256:6cd26290f156ef12dc317bd83368040961233ec718f2dfe2fb40a0fc27a451e7",
+          "digest_basis": "canonical"
+        }
+      ]
+    }
+  ]
+}
